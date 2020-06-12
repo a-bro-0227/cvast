@@ -12,21 +12,26 @@ df_path <- "inputs/CVAST books.xlsx"
 
 # download books ----
 
+drive_auth(email = "alexander.c.brown319@gmail.com")
+
 drive_download("CVAST books.xlsx",
                path = df_path,
                overwrite = T)
 
 # read in file ----
 
-cvast_books <- excel_sheets(df_path) %>% 
-  map(function(s) {read_excel(path = df_path, sheet = s, range = cell_cols("A:D"))}) %>% 
+cvast_books <- excel_sheets(df_path)[!grepl("Category", excel_sheets(df_path))] %>% 
+  map(function(s) {read_excel(path = df_path, sheet = s, range = cell_cols("A:E"))}) %>% 
   bind_rows() %>% 
   rename_all(tolower)
+
+# clean books ----
 
 cvast_books <- cvast_books %>%
   mutate(trans_type = ifelse(amount < 0, "Expense", "Revenue"),
          year = as.numeric(format(date, "%Y")))
 
+# 
 cvast_books %>% filter(!is.na(trans_type)) %>% 
   group_by(year, trans_type) %>% summarize(amount = sum(amount)) %>% 
   ggplot(aes(x = year, y = abs(amount), fill = trans_type)) +
