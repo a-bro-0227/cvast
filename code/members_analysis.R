@@ -1,18 +1,4 @@
 
-# read-in
-pay_pal <- fread('inputs/paypal_activity.CSV') %>% 
-  rename_all(to_snake_case) %>% 
-  filter(str_detect(type, 'Withdrawal', negate = T)) %>% 
-  mutate_at(vars(gross, net), as.numeric) %>% 
-  mutate_all(na_if,'') %>% 
-  mutate(date = mdy(date),
-         year = year(date),
-         year_month = format(date, '%Y-%m'),
-         income_type = case_when(gross == 35 | gross == 50 ~ 'membership',
-                                T ~ 'donation'),
-         expires_date = date + 365) %>% 
-  add_count(from_email_address, income_type, name = 'years_a_member')
-
 # income by year
 pay_pal %>% 
   group_by(year) %>% 
@@ -112,9 +98,3 @@ non_renewed <- pay_pal %>%
          years_a_member) %>% 
   mutate(years_a_member = ifelse(years_a_member == 30, 3, years_a_member)) %>% 
   distinct()
-
-list_of_datasets <- list('current_members' = current_members,
-                         'non_renewed' = non_renewed,
-                         'cvast_books' = cvast_books)
-
-write.xlsx(list_of_datasets, file = 'outputs/cvast_info.xlsx')
